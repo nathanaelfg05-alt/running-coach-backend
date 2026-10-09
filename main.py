@@ -49,7 +49,8 @@ async def get_recommendation(request: WorkoutRequest):
     }}
     """
 
-    candidate_models = ["models/gemini-2.5-flash", "models/gemini-1.5-flash", "gemini-2.5-flash"]
+    # Menggunakan model 2.0-flash dan fallback 1.5-flash
+    candidate_models = ["gemini-2.0-flash", "gemini-1.5-flash"]
 
     for model_name in candidate_models:
         try:
