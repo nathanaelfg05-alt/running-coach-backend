@@ -1,17 +1,11 @@
 import os
-import time
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from google import genai
-from google.genai import types
-import json
+import httpx
 
 app = FastAPI()
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-
-# Inisialisasi client Google GenAI
-client = genai.Client(api_key=GEMINI_API_KEY)
 
 class TodayWorkout(BaseModel):
     distance_km: float
@@ -50,28 +44,45 @@ async def get_recommendation(request: WorkoutRequest):
     }}
     """
 
-    # Daftar model aktif yang terverifikasi mendukung generateContent
-    candidate_models = ["gemini-2.0-flash", "gemini-1.5-flash-8b", "gemini-1.5-pro-latest"]
+    # Daftar model yang dicoba
+    candidate_models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
+    
+    headers = {
+        "Content-Type": "application/json",
+        "x-goog-api-key": GEMINI_API_KEY
+    }
 
     last_error = ""
-    for model_name in candidate_models:
-        try:
-            print(f"Mencoba memanggil model: {model_name}...")
-            response = client.models.generate_content(
-                model=model_name,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json"
-                )
-            )
-            return json.loads(response.text)
 
-        except Exception as e:
-            last_error = str(e)
-            print(f"Gagal memanggil {model_name}: {e}")
-            time.sleep(1)
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        for model in candidate_models:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+            payload = {
+                "contents": [{"parts": [{"text": prompt}]}],
+                "generationConfig": {
+                    "response_mime_type": "application/json"
+                }
+            }
+
+            try:
+                print(f"Mencoba HTTP Request ke model: {model}...")
+                response = await client.post(url, json=payload, headers=headers)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    # Ambil teks JSON dari struktur respon Gemini
+                    raw_text = data['candidates'][0]['content']['parts'][0]['text']
+                    import json
+                    return json.loads(raw_text)
+                else:
+                    last_error = f"Status {response.status_code}: {response.text}"
+                    print(f"Gagal {model}: {last_error}")
+
+            except Exception as e:
+                last_error = str(e)
+                print(f"Error {model}: {e}")
 
     raise HTTPException(
-        status_code=503, 
-        detail=f"Gagal memanggil AI: {last_error}"
+        status_code=503,
+        detail=f"Gagal memanggil Gemini API: {last_error}"
     )
