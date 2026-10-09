@@ -43,15 +43,16 @@ async def get_recommendation(request: WorkoutRequest):
     Kembalikan respon HANYA dalam format JSON valid dengan struktur persis seperti ini:
     {{
       "workout_type": "string (Nama latihan untuk BESOK)",
-      "target_distance_km": float (Jarak rekomendasi untuk BESOK),
+      "target_distance_km": float (Jarak rekomendasi untuk BESOK)",
       "target_pace": "string (Pace rekomendasi untuk BESOK)",
       "advice": "string (Evaluasi singkat latihan hari ini, alasan memilih latihan besok, zona detak jantung, dan tips pemulihan/eksekusi)"
     }}
     """
 
-    # Menggunakan model 2.0-flash dan fallback 1.5-flash
-    candidate_models = ["gemini-2.0-flash", "gemini-1.5-flash"]
+    # Model resmi versi Gemini SDK
+    candidate_models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
 
+    last_error = ""
     for model_name in candidate_models:
         try:
             print(f"Mencoba memanggil model: {model_name}...")
@@ -65,10 +66,11 @@ async def get_recommendation(request: WorkoutRequest):
             return json.loads(response.text)
 
         except Exception as e:
+            last_error = str(e)
             print(f"Gagal memanggil {model_name}: {e}")
             time.sleep(1)
 
     raise HTTPException(
         status_code=503, 
-        detail="Server AI sedang sibuk. Silakan coba lagi beberapa saat lagi."
+        detail=f"Gagal memanggil AI: {last_error}"
     )
