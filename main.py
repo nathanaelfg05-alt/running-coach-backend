@@ -10,6 +10,7 @@ app = FastAPI()
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
+# Inisialisasi client
 client = genai.Client(api_key=GEMINI_API_KEY)
 
 class TodayWorkout(BaseModel):
@@ -49,8 +50,12 @@ async def get_recommendation(request: WorkoutRequest):
     }}
     """
 
-    # Model resmi versi Gemini SDK
-    candidate_models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
+    # Menggunakan prefix 'models/' sesuai standar SDK google-genai
+    candidate_models = [
+        "models/gemini-2.5-flash",
+        "models/gemini-1.5-flash",
+        "gemini-2.5-flash"
+    ]
 
     last_error = ""
     for model_name in candidate_models:
