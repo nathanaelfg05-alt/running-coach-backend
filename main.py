@@ -8,7 +8,7 @@ import json
 
 app = FastAPI()
 
-# Membaca GEMINI_API_KEY dari Environment Variable di Render / OS
+# Membaca GEMINI_API_KEY dari Environment Variable
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
 client = genai.Client(api_key=GEMINI_API_KEY)
@@ -50,7 +50,8 @@ async def get_recommendation(request: WorkoutRequest):
     }}
     """
 
-    candidate_models = ["gemini-3.8-flash", "gemini-1.5-flash", "gemini-1.5-pro"]
+    # Menggunakan model resmi dan stabil yang didukung Google Gemini SDK
+    candidate_models = ["gemini-2.5-flash", "gemini-1.5-flash"]
 
     for model_name in candidate_models:
         try:
