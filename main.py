@@ -10,7 +10,7 @@ app = FastAPI()
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
-# Inisialisasi client
+# Inisialisasi client Google GenAI
 client = genai.Client(api_key=GEMINI_API_KEY)
 
 class TodayWorkout(BaseModel):
@@ -50,12 +50,8 @@ async def get_recommendation(request: WorkoutRequest):
     }}
     """
 
-    # Menggunakan prefix 'models/' sesuai standar SDK google-genai
-    candidate_models = [
-        "models/gemini-2.5-flash",
-        "models/gemini-1.5-flash",
-        "gemini-2.5-flash"
-    ]
+    # Daftar model aktif yang terverifikasi mendukung generateContent
+    candidate_models = ["gemini-2.0-flash", "gemini-1.5-flash-8b", "gemini-1.5-pro-latest"]
 
     last_error = ""
     for model_name in candidate_models:
